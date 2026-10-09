@@ -39,3 +39,5 @@ Outputs: `agent-commits`, `failing`.
 For each commit in the PR: its sha, message, author name and email, and author date. Nothing else; no code.
 
 Apache-2.0.
+
+Runs on its own PRs via .github/workflows/self-test.yml.
