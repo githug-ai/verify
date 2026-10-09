@@ -14,6 +14,9 @@ inputs:
   githug-url:
     description: githug API base URL.
     default: https://githug.ai
+  fail-on-error:
+    description: Fail the check when githug can't be reached. By default it passes with a warning, so an outage never blocks your PRs.
+    default: "false"
 outputs:
   agent-commits:
     description: Commits in the PR that claim an AI agent.
@@ -31,4 +34,5 @@ runs:
         REPO: ${{ github.repository }}
         PR: ${{ inputs.pull-request }}
         GITHUG_URL: ${{ inputs.githug-url }}
+        FAIL_ON_ERROR: ${{ inputs.fail-on-error }}
       run: ${{ github.action_path }}/verify.sh

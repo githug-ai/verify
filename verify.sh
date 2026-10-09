@@ -9,8 +9,19 @@ tmp="$(mktemp -d)"
 gh api "repos/$REPO/pulls/$PR/commits?per_page=100" \
   --jq '[.[] | {sha, message: .commit.message, date: .commit.author.date, author_email: .commit.author.email, author_name: .commit.author.name}]' > "$tmp/commits.json"
 
-jq -n --arg repo "$REPO" --slurpfile c "$tmp/commits.json" '{repo: $repo, commits: $c[0]}' |
-  curl -fsS "$GITHUG_URL/v1/verify" -H 'Content-Type: application/json' -H 'User-Agent: githug-verify-action/1' --data-binary @- > "$tmp/result.json"
+jq -n --arg repo "$REPO" --slurpfile c "$tmp/commits.json" '{repo: $repo, commits: $c[0]}' > "$tmp/request.json"
+# Retries 429/5xx with backoff. If githug stays unreachable, pass with a warning (an outage
+# must not block anyone's PRs) unless fail-on-error is set.
+if ! curl -fsS --retry 4 --retry-delay 5 --retry-all-errors --max-time 30 "$GITHUG_URL/v1/verify" \
+    -H 'Content-Type: application/json' -H 'User-Agent: githug-verify-action/1' --data-binary @"$tmp/request.json" > "$tmp/result.json"; then
+  if [ "${FAIL_ON_ERROR:-false}" = true ]; then
+    echo "::error::githug verify couldn't reach $GITHUG_URL."
+    exit 1
+  fi
+  echo "::warning::githug verify couldn't reach $GITHUG_URL; skipping the check this time."
+  echo "githug verify: skipped (githug unreachable)." >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+  exit 0
+fi
 
 agent=$(jq -r .agent_commits "$tmp/result.json")
 failing=$(jq -r .failing "$tmp/result.json")

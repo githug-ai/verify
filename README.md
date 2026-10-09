@@ -31,6 +31,7 @@ Each run writes a table to the job summary, with links to the full chain for eve
 | `github-token` | `github.token` | reads the PR's commits |
 | `pull-request` | the triggering PR | PR number |
 | `githug-url` | `https://githug.ai` | API base |
+| `fail-on-error` | `false` | fail when githug is unreachable (by default it passes with a warning, so an outage never blocks your PRs) |
 
 Outputs: `agent-commits`, `failing`.
 
