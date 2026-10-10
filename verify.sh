@@ -32,8 +32,10 @@ failing=$(jq -r .failing "$tmp/result.json")
     echo "| | commit | agent | accountable |"
     echo "|---|---|---|---|"
     jq -r --arg u "$GITHUG_URL" --arg r "$REPO" '.commits[] | select(.claims_agent) |
-      "| \(if .verdict == "verified" then "✅" else "❌" end) | [\(.sha[0:7])](\($u)/v/\($r)/\(.sha)) | \(.agent) | \(.accountable // "?") |"' "$tmp/result.json"
+      "| \(if .verdict == "verified" then "✅" elif .verdict == "consistent" then "◐" else "❌" end) | [\(.sha[0:7])](\($u)/v/\($r)/\(.sha)) | \(.agent) | \(.accountable // "?") |"' "$tmp/result.json"
     jq -r '.commits[] | select(.claims_agent and .verdict != "verified") | "\n**\(.sha[0:7])** — " + ([.checks[] | select(.ok | not) | .label] | join("; "))' "$tmp/result.json"
+    echo
+    echo "✅ attested by the agent's key at push · ◐ consistent with githug's records, not attested · ❌ contradicts the records"
   fi
   echo
   echo "Checked against githug's agent registry and key log · [githug.ai](https://githug.ai)"
@@ -47,4 +49,4 @@ if [ "$(jq -r .pass "$tmp/result.json")" != true ]; then
   echo "::error::$failing commit(s) claim an AI agent that githug can't verify. Details in the job summary."
   exit 1
 fi
-echo "githug verify: $agent agent commit(s), all verified."
+echo "githug verify: $agent agent commit(s), none contradict githug's records ($(jq -r '.attested // 0' "$tmp/result.json") attested)."
