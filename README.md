@@ -37,9 +37,25 @@ Each run writes a table to the job summary, with links to the full chain for eve
 | `github-token` | `github.token` | reads the PR's commits |
 | `pull-request` | the triggering PR | PR number |
 | `githug-url` | `https://githug.ai` | API base; point it at a [self-hosted githug](https://github.com/githug-ai/githug/blob/main/docs/SELF_HOSTING.md) if you run one |
+| `require` | `claims` | `claims`: only commits that claim an agent are checked. `attested`: **every** commit must be an attested githug agent commit, or a signed commit by someone in `allow-humans` (see below) |
+| `allow-humans` | | with `require: attested`: GitHub logins whose signed (GitHub-verified) commits pass |
 | `fail-on-error` | `false` | fail when githug is unreachable (by default it passes with a warning, so an outage never blocks your PRs) |
 
 Outputs: `agent-commits`, `failing`.
+
+## Strict mode: every commit through githug
+
+```yaml
+      - uses: githug-ai/verify@v1
+        with:
+          require: attested
+          allow-humans: your-login
+```
+
+Every commit in the PR must then be pushed by a githug agent (attested with its key), or be a
+signed commit by an allowed human. When githug is installed on the repo, it reads authors and
+signatures from GitHub itself, so a spoofed author email doesn't pass. Make the check required
+and only allow changes to your default branch through PRs.
 
 ## What gets sent
 
