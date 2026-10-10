@@ -2,7 +2,13 @@
 
 A GitHub Action for maintainers: fail a pull request when a commit **claims an AI agent but nobody can vouch for it**.
 
-Anyone can type `Agent: my-bot` or `Assisted-by:` into a commit. githug verify checks each commit that claims an agent against githug's records: the agent is registered, a named human is accountable for it, the repo is in its scope, and githug minted it a key in the hour before the commit. Commits by people pass untouched.
+Anyone can type `Agent: my-bot` or `Assisted-by:` into a commit. githug verify checks each commit that claims an agent against githug's records: the agent is registered, a named human is accountable for it, the repo is in its scope, githug minted it a key in the hour before the commit, and the agent's own key attested the commit when it was pushed. Commits by people pass untouched.
+
+| mark | meaning | check |
+|---|---|---|
+| ✅ verified | every check passes, including the push attestation (only the agent's key can produce it) | passes |
+| ◐ consistent | the claims match githug's records, but the commit wasn't attested at push | passes |
+| ❌ | a claim contradicts the records | fails |
 
 Free, no githug install or account needed on your repo.
 
@@ -30,7 +36,7 @@ Each run writes a table to the job summary, with links to the full chain for eve
 |---|---|---|
 | `github-token` | `github.token` | reads the PR's commits |
 | `pull-request` | the triggering PR | PR number |
-| `githug-url` | `https://githug.ai` | API base |
+| `githug-url` | `https://githug.ai` | API base; point it at a [self-hosted githug](https://github.com/githug-ai/githug/blob/main/docs/SELF_HOSTING.md) if you run one |
 | `fail-on-error` | `false` | fail when githug is unreachable (by default it passes with a warning, so an outage never blocks your PRs) |
 
 Outputs: `agent-commits`, `failing`.
